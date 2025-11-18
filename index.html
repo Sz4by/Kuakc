@@ -2,56 +2,64 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Final Fix Player</title>
     
-    <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0, user-scalable=no">
-    
-    <title>FullHD Player</title>
     <style>
-        /* Minden margó nullázása */
+        /* 1. NULLÁZÁS: Minden margó törlése */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            background-color: #000 !important;
-            overflow: hidden !important; /* Görgősáv tiltása */
-            
-            /* A test mérete fixen FullHD */
-            width: 1920px !important;
-            height: 1080px !important;
+            background-color: #000; /* Fekete háttér */
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Nincs görgetés */
+            /* Ez segít a TV-nek megérteni a méreteket: */
+            position: relative;
         }
 
-        /* A videó tárolója */
-        #video-wrapper {
-            width: 1920px;
-            height: 1080px;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background: black;
-        }
-
-        /* Maga a videó lejátszó */
+        /* 2. A VIDEÓ KÉNYSZERÍTÉSE KÖZÉPRE */
         video {
-            display: block; /* Megszünteti a soron belüli hézagokat */
-            width: 1920px !important;
-            height: 1080px !important;
-            object-fit: fill !important; /* Húzza szét a sarkokig */
-            border: none;
+            position: absolute;
+            
+            /* A képernyő mértani közepe: */
+            top: 50%;
+            left: 50%;
+            
+            /* Visszahúzzuk a videót a saját méretének felével.
+               Ez a "Mágikus kódsor", ami kijavítja az elcsúszást: */
+            transform: translate(-50%, -50%);
+            
+            /* Méretezés: Legalább akkora legyen, mint a képernyő */
+            min-width: 100vw; 
+            min-height: 100vh;
+            
+            /* Ha a videó aránya nem passzol, akkor is nyújtsa ki: */
+            width: 100%;
+            height: 100%;
+            
+            /* Kifeszítés (hogy ne legyen fekete csík): */
+            object-fit: fill; 
+            
+            z-index: 9999;
             outline: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="video-wrapper">
-        <video id="player" width="1920" height="1080" controls autoplay playsinline></video>
-    </div>
+    <video id="player" controls autoplay playsinline></video>
 
     <script>
         window.onload = function() {
             const fullUrl = window.location.href;
             let videoLink = null;
 
-            // Link kinyerése
+            // URL keresése
             if (fullUrl.includes("film=")) {
                 videoLink = fullUrl.substring(fullUrl.indexOf("film=") + 5);
             } else if (fullUrl.includes("urls=")) {
@@ -59,11 +67,13 @@
             }
 
             if (videoLink) {
+                // Dekódolás
                 try { if(videoLink.includes('%')) videoLink = decodeURIComponent(videoLink); } catch(e){}
                 
                 const player = document.getElementById('player');
                 player.src = videoLink;
-                console.log("FullHD indítása:", videoLink);
+                
+                console.log("Indítás középre igazítva:", videoLink);
             }
         };
     </script>
