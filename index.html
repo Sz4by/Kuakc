@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videó Lejátszó</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <style>
+        /* Teljes képernyős beállítások */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000; /* Mozi fekete háttér */
+            overflow: hidden; /* Görgetősáv eltüntetése */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+        }
+
+        /* A lejátszó stílusa */
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Méretarányos kitöltés */
+            outline: none;
+        }
+
+        /* Hibaüzenet stílusa */
+        #message-box {
+            position: absolute;
+            color: white;
+            background: rgba(20, 20, 20, 0.9);
+            padding: 20px 40px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #444;
+            display: none; /* Alapból rejtve */
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        #message-box h3 { margin-top: 0; color: #ff4444; }
+        #message-box p { color: #ddd; margin-bottom: 5px; }
+        code { background: #333; padding: 2px 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div id="message-box"></div>
+
+    <video id="player" controls autoplay playsinline></video>
+
+    <script>
+        // --- BEÁLLÍTÁSOK ÉS VÁLTOZÓK ---
+        const video = document.getElementById('player');
+        const messageBox = document.getElementById('message-box');
+        
+        // URL paraméter kiolvasása (?link=...)
+        const urlParams = new URLSearchParams(window.location.search);
+        const videoUrl = urlParams.get('link');
+
+        // Hibaüzenet megjelenítő funkció
+        function showError(title, desc) {
+            messageBox.style.display = 'block';
+            messageBox.innerHTML = `<h3>${title}</h3><p>${desc}</p>`;
+            video.style.display = 'none'; // Videó elrejtése hiba esetén
+        }
+
+        // --- FŐ LOGIKA ---
+
+        // 1. Ellenőrizzük, hogy van-e link
+        if (!videoUrl) {
+            showError(
+                "Nincs megadva videó!", 
+                "Használd a következő formátumot az URL sávban:<br><br><code>teoldalad.com/player.html?link=https://pelda.hu/video.mp4</code>"
+            );
+        } else {
+            // 2. M3U8 (HLS) kezelése
+            if (videoUrl.includes('.m3u8') && Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(videoUrl);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        showError("Hiba a streammel", "Nem sikerült betölteni az m3u8 fájlt.");
+                    }
+                });
+            }
+            // 3. Natív HLS (pl. Safari) vagy sima MP4 kezelése
+            else {
+                video.src = videoUrl;
+            }
+
+            // 4. Általános hibafigyelés (pl. ha az MP4 link 404-es vagy CORS hibás)
+            video.onerror = function() {
+                showError(
+                    "Lejátszási Hiba", 
+                    "A videót nem sikerült betölteni.<br>Lehetséges okok: hibás link, vagy a videó szervere tiltja a külső lejátszást."
+                );
+            };
+        }
+    </script>
+
+</body>
+</html>
